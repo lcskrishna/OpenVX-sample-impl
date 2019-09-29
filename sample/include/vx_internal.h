@@ -1149,6 +1149,11 @@ typedef struct _vx_memory_t {
      * VX_WRITE_ONLY or VX_READ_AND_WRITE flag parts. Only single writers are permitted.
      */
     vx_sem_t locks[VX_PLANE_MAX];
+
+#ifdef OPENVX_USE_OPENCL_INTEROP
+    cl_mem*     opencl_buf[VX_PLANE_MAX];
+    vx_uint32   opencl_offset[VX_PLANE_MAX];
+#endif
 } vx_memory_t;
 
 /*! \brief The internal representation of a \ref vx_image
