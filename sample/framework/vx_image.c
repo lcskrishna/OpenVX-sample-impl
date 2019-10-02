@@ -852,20 +852,23 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                 vxReleaseImage(&image);
                 return (vx_image)ownGetErrorObject(context, VX_ERROR_INVALID_PARAMETERS);
             }
-#ifdef OPENVX_USE_OPENCL_INTEROP
-            //clEnqueueReadBuffer(context->opencl_command_queue, ptrs[p], CL_TRUE, 0, sizeof(vx_uint8) * sizeof(*ptrs[p]), (void *) image->memory.ptrs[p], 0, NULL, NULL);
             image->memory.ptrs[p] = ptrs[p];
-#else
-            image->memory.ptrs[p] = ptrs[p];
-#endif
             image->memory.strides[p][VX_DIM_C] = (vx_uint32)vxSizeOfChannel(color);
             image->memory.strides[p][VX_DIM_X] = addrs[p].stride_x;
             image->memory.strides[p][VX_DIM_Y] = addrs[p].stride_y;
 
             ownCreateSem(&image->memory.locks[p], 1);
+#ifdef OPENVX_USE_OPENCL_INTEROP
+            cl_int cerr = 0;
+            vx_size size = sizeof(vx_uint8);
+            for(vx_uint32 d = 0; d < image->memory.ndims; d++) {
+                size *= (vx_size)image->memory.dims[p][d];            
+            }
+            image->memory.opencl_buf[p] = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+                                                            size, image->memory.ptrs[p], &cerr);
+#endif
         }
     }
-
     return image;
 }
 
